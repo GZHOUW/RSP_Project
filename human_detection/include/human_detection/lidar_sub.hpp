@@ -10,7 +10,8 @@
 class Laser{
 private:
     ros::NodeHandle node_handle;
-    ros::Subscriber laser_sub;
+    ros::Subscriber sub_laserScan;
+    ros::Publisher pub_pointCloud;
     laser_geometry::LaserProjection projector;
 
 public:

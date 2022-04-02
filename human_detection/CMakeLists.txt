@@ -17,8 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(PCL)
-
+find_package(PCL 1.2 REQUIRED)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -129,6 +128,9 @@ add_definitions(${PCL_DEFINITIONS})
 add_library( lidar_sub
   src/lidar_sub.cpp
 )
+add_library( detector
+  src/detector.cpp
+)
 
 
 ## Add cmake target dependencies of the library
@@ -140,7 +142,7 @@ add_library( lidar_sub
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(lidar_sub_node src/lidar_sub_node.cpp)
-
+add_executable(detector_node src/detector_node.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -158,6 +160,12 @@ target_link_libraries(lidar_sub_node
   lidar_sub
 )
 
+target_link_libraries(detector_node
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  lidar_sub
+  detector
+)
 
 #############
 ## Install ##
