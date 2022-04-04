@@ -2,6 +2,7 @@
 
 
 Detector::Detector(ros::NodeHandle& nh){
+    std::cout << "detector constructor called" << std::endl;
     node_handle = nh;
     // call callback function in constructor
     sub_pointCloud = nh.subscribe("/point_cloud", 1000, &Detector::detect_callback, this);
@@ -10,9 +11,9 @@ Detector::Detector(ros::NodeHandle& nh){
 void Detector::detect_callback(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud){
 
     std::cout << "Point cloud before filtering has: " << cloud->size () << " data points." << std::endl;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f (new pcl::PointCloud<pcl::PointXYZ>);
+
     // Create the filtering object: downsample the dataset using a leaf size of 1cm
-    
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::VoxelGrid<pcl::PointXYZ> vg;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
     vg.setInputCloud (cloud);
@@ -33,13 +34,12 @@ void Detector::detect_callback(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cl
     seg.setMaxIterations (100);
     seg.setDistanceThreshold (0.02);
     int nr_points = (int) cloud_filtered->size ();
-    while (cloud_filtered->size () > 0.3 * nr_points)
-    {
+    /*
+    while (cloud_filtered->size () > 0.3 * nr_points){
         // Segment the largest planar component from the remaining cloud
         seg.setInputCloud (cloud_filtered);
         seg.segment (*inliers, *coefficients);
-        if (inliers->indices.size () == 0)
-        {
+        if (inliers->indices.size () == 0){
             std::cout << "Could not estimate a planar model for the given dataset." << std::endl;
             break;
         }
@@ -59,7 +59,7 @@ void Detector::detect_callback(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cl
         extract.filter (*cloud_f);
         *cloud_filtered = *cloud_f;
     }
- 
+    */
     // Creating the KdTree object for the search method of the extraction
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
     tree->setInputCloud (cloud_filtered);
@@ -67,12 +67,13 @@ void Detector::detect_callback(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cl
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
     ec.setClusterTolerance (0.02); // 2cm
-    ec.setMinClusterSize (100);
+    ec.setMinClusterSize (10);
     ec.setMaxClusterSize (25000);
     ec.setSearchMethod (tree);
     ec.setInputCloud (cloud_filtered);
     ec.extract (cluster_indices);
- 
+    std::cout << "there are " << cluster_indices.size() << " clusters" << std::endl;
+    /*
     int j = 0;
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
@@ -90,4 +91,5 @@ void Detector::detect_callback(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cl
         writer.write<pcl::PointXYZ> (ss.str (), *cloud_cluster, false); //*
         j++;
     }
+    */
 }
