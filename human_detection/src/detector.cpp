@@ -68,7 +68,7 @@ void Detector::detect_callback(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr cl
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
     ec.setClusterTolerance (0.02); // 2cm
     ec.setMinClusterSize (10);
-    ec.setMaxClusterSize (25000);
+    ec.setMaxClusterSize (100);
     ec.setSearchMethod (tree);
     ec.setInputCloud (cloud_filtered);
     ec.extract (cluster_indices);

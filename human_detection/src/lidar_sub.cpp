@@ -3,7 +3,7 @@
 Laser::Laser(ros::NodeHandle& nh){
     node_handle = nh;
     // call callback function in constructor
-    sub_laserScan = nh.subscribe("/base_scan", 1000, &Laser::lidar_callback, this);
+    sub_laserScan = nh.subscribe("/scan", 1000, &Laser::lidar_callback, this);
     pub_pointCloud = nh.advertise<pcl::PointCloud<pcl::PointXYZ>>("/point_cloud", 1);
 }
 
