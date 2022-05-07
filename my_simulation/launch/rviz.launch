@@ -1,0 +1,3 @@
+<launch>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find my_simulation)/rviz/robot_navigation.rviz"/>
+</launch>
