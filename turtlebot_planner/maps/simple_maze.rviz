@@ -296,7 +296,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /move_base/turtlebot_rrt/rrt_tree
+      Marker Topic: /move_base/turtlebot_planner/rrt_tree
       Name: Marker
       Namespaces:
         {}

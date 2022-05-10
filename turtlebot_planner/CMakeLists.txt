@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 2.8.3)
 add_definitions(-std=c++11 -Wall -Werror)
 project(turtlebot_planner)
 
@@ -109,9 +109,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES turtlebot_planner
-#  CATKIN_DEPENDS base_local_planner costmap_2d nav_core pluginlib roscpp roslint tf visualization_msgs
+  INCLUDE_DIRS include
+  LIBRARIES turtlebot_planner
+  CATKIN_DEPENDS base_local_planner costmap_2d nav_core pluginlib roscpp visualization_msgs
 #  DEPENDS system_lib
 )
 
@@ -127,14 +127,15 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(planner
+add_library(turtlebot_planner
   src/Planner.cpp
+  src/Vertex.cpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(planner
+add_dependencies(turtlebot_planner
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
 )
@@ -155,7 +156,7 @@ add_dependencies(planner
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(planner
+target_link_libraries(turtlebot_planner
   ${catkin_LIBRARIES}
 )
 
@@ -181,7 +182,7 @@ target_link_libraries(planner
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS planner
+install(TARGETS turtlebot_planner
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

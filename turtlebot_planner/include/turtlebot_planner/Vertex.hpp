@@ -1,12 +1,14 @@
 
-class Vertex{
+namespace turtlebot_planner{
+    class Vertex{
 
-public:
+    public:
 
-    float x;
-    float y;
-    int idx;
-    int parent;
+        float x;
+        float y;
+        int idx;
+        int parent;
 
-    Vertex(float x, float y, int idx, int parent);
-};
+        Vertex(float x, float y, int idx, int parent);
+    }; 
+}
