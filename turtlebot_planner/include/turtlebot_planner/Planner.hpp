@@ -1,5 +1,3 @@
-#ifndef INCLUDE_turtlebot_planner_turtlebot_planner_H_
-#define INCLUDE_turtlebot_planner_turtlebot_planner_H_
 
 /** include ROS libraries **/
 #include <ros/ros.h>
@@ -27,6 +25,8 @@
 /** Local includes **/
 #include "turtlebot_planner/Vertex.hpp"
 
+typedef std::pair<float, float> state;
+
 namespace turtlebot_planner {
 class Planner : public nav_core::BaseGlobalPlanner {
  public:
@@ -39,7 +39,7 @@ class Planner : public nav_core::BaseGlobalPlanner {
 
      bool makePlan(const geometry_msgs::PoseStamped& start,
                    const geometry_msgs::PoseStamped& goal,
-                   std::vector<geometry_msgs::PoseStamped>& plan);
+                   std::vector<geometry_msgs::PoseStamped>& path);
 
     std::vector<bool> getObstacleMap() {
       return obstacles;
@@ -49,32 +49,32 @@ class Planner : public nav_core::BaseGlobalPlanner {
       return V;
     }
 
-     std::pair<float, float> GetRandomPoint();
+     state randomState();
 
-     int GetClosestVertex(std::pair<float, float> random_point);
+     int nearestNeighbor(state random_point);
 
     void addVertex(turtlebot_planner::Vertex new_vertex) {
       V.push_back(new_vertex);
     }
 
-     float GetDistance(std::pair<float, float> start_point,
-                       std::pair<float, float> end_point);
+     float dist(state start_point,
+                       state end_point);
 
-     bool MoveTowardsPoint(int closest_vertex,
-                           std::pair<float, float> random_point);
+     bool newState(int closest_vertex,
+                           state random_point);
 
-     bool ReachedGoal(int new_vertex);
+     bool isGoal(int new_vertex);
 
      std::vector<geometry_msgs::PoseStamped>
-       BuildPlan(int goal_index,
+       generatePath(int goal_index,
                  const geometry_msgs::PoseStamped& start,
                  const geometry_msgs::PoseStamped& goal);
 
-     int FindPath(const geometry_msgs::PoseStamped& start,
+     int findPath(const geometry_msgs::PoseStamped& start,
                   const geometry_msgs::PoseStamped& goal);
 
-     bool IsSafe(std::pair<float, float> start_point,
-                 std::pair<float, float> end_point);
+     bool isFree(state start_point,
+                 state end_point);
 
  private:
      ros::NodeHandle nh;
@@ -87,7 +87,7 @@ class Planner : public nav_core::BaseGlobalPlanner {
 
      int max_iterations;
 
-     int current_iterations_;
+     int cur_iterations;
 
      base_local_planner::WorldModel* model;
 
@@ -113,5 +113,4 @@ class Planner : public nav_core::BaseGlobalPlanner {
 
      std::vector<turtlebot_planner::Vertex> V;
 };
-}  // namespace turtlebot_planner
-#endif  // INCLUDE_turtlebot_planner_turtlebot_planner_H_
+} 
