@@ -1,90 +1,252 @@
+#ifndef INCLUDE_turtlebot_planner_turtlebot_planner_H_
+#define INCLUDE_turtlebot_planner_turtlebot_planner_H_
+
+/** include ROS libraries **/
 #include <ros/ros.h>
-#include <turtlebot_planner/Vertex.hpp>
-#include <geometry_msgs/PoseStamped.h>
-#include <nav_core/base_global_planner.h>
-#include <costmap_2d/costmap_2d.h>
-#include <costmap_2d/costmap_2d_ros.h>
+
 #include <move_base_msgs/MoveBaseAction.h>
+
+/** for global path planner interface **/
+#include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
+#include <nav_core/base_global_planner.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <angles/angles.h>
 #include <base_local_planner/world_model.h>
 #include <base_local_planner/costmap_model.h>
-#include <vector>
-#include <algorithm>
+
+/** include standard libraries **/
+#include <iostream>
 #include <cmath>
-#include <random>
+#include <set>
 #include <string>
+#include <vector>
 #include <utility>
-typedef std::pair<float, float> state;
-namespace turtlebot_planner{
-        
-    class Planner : public nav_core::BaseGlobalPlanner{
-    public:
+#include <boost/random.hpp>
 
-        Planner();
+/** Local includes **/
+#include "turtlebot_planner/Vertex.hpp"
 
-        Planner(std::string name, costmap_2d::Costmap2DROS* m);
+namespace turtlebot_planner {
+class Planner : public nav_core::BaseGlobalPlanner {
+ public:
+     /**
+     * @brief Constructor for Planner
+     */
+     Planner();
 
-        // override base class
-        void initialize(std::string name, costmap_2d::Costmap2DROS* m);
+     /**
+     * @brief Constructor for Planner
+     * @param costmap_ros cost_map ros wrapper
+     * @param name name to associate to the node
+     */
+     Planner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
-        // override base class
-        bool makePlan(const geometry_msgs::PoseStamped& start,
-                        const geometry_msgs::PoseStamped& goal,
-                        std::vector<geometry_msgs::PoseStamped>& path);
-        
-        int findPath();
+     /** overridden classes from interface nav_core::BaseGlobalPlanner
+     * @brief Initialize the ros handle
+     * @param name ROS NodeHandle name
+     * @param costmap_ros cost_map ros wrapper
+     */
+     void initialize(std::string name,
+                     costmap_2d::Costmap2DROS* costmap_ros);
 
-        // false means obstacle, true means free
-        std::vector<bool> obstacles;
-        state randomState();
+     /**
+     * @brief follows the virtual method of the base class
+     * @param start start pose
+     * @param goal goal pose
+     * @param plan generated path
+     * @return bool, true
+     */
+     bool makePlan(const geometry_msgs::PoseStamped& start,
+                   const geometry_msgs::PoseStamped& goal,
+                   std::vector<geometry_msgs::PoseStamped>& plan);
 
-        int nearestNeighbor(state q);
+    /**
+    * @brief returns the obstacle map
+    * @return std::vector<bool> Unsafe cells are false, safe cells are true
+    */
+    std::vector<bool> getObstacleMap() {
+      return obstacle_map_;
+    }
 
-        // move a small step from q_near to q_rand
-        state newState(int q_near_idx, state q_rand);
+    /**
+    * @brief returns the rrt vertex tree
+    */
+    std::vector<turtlebot_planner::Vertex> getVertexTree() {
+      return vertex_list_;
+    }
 
-        float dist(state q1, state q2);
+     /**
+     * @brief Gets a random point in the map space
+     * @return returns an x,y pair
+     */
+     std::pair<float, float> GetRandomPoint();
 
-        bool isCollision(state q1, state q2);
+     /**
+     * @brief Gets the closest vertex to the given point
+     * @param random_point A point in the map space
+     * @param vertex_list the rrt vertex tree
+     * @return the index of the closest vertex to the given point
+     */
+     int GetClosestVertex(std::pair<float, float> random_point);
 
-        bool isGoal(state q);
+    /**
+    * @brief adds a new vertex to the rrt vertex tree
+    * @param new_vertex the new vertex to be added
+    */
+    void addVertex(turtlebot_planner::Vertex new_vertex) {
+      vertex_list_.push_back(new_vertex);
+    }
 
-        std::vector<geometry_msgs::PoseStamped> generatePath(const geometry_msgs::PoseStamped& start,
-                        const geometry_msgs::PoseStamped& goal,int goal_idx);
+     /**
+     * @brief Euclidean distance between two points
+     * @param start_point starting point
+     * @param end_point ending point
+     * @return euclidean distance between the points
+     */
+     float GetDistance(std::pair<float, float> start_point,
+                       std::pair<float, float> end_point);
 
+     /**
+     * @brief Moves from the closest vertex towards the random point
+     * @detail Begins at the closest point and attempts to move step_size_
+     * towards the random point. Each step along the way at delta_ intervals
+     * is checked for obstacles. If an obstacle is encountered the function
+     * returns false. If it makes it from the closest vertex to step_size_
+     * towards the random point a new vertex is created and added to
+     * vertex_list_ and the function returns true.
+     * @return true if a move was made, false if blocked by obstacle
+     */
+     bool MoveTowardsPoint(int closest_vertex,
+                           std::pair<float, float> random_point);
 
-    private:
-        
+     /**
+     * @brief Is vertex within goal_radius_ of the goal
+     * @param the vertex to be checked
+     * @return true if within goal_radius_
+     */
+     bool ReachedGoal(int new_vertex);
 
-        ros::NodeHandle nh;
+     /**
+     * @brief builds the plan from vertices and returns in PoseStamped
+     * @param goal_index the index of the vertex that has reached the goal
+     * @param start the starting location of the robot as passed to makePlan
+     * @param goal the goal location of the robot as passed to makePlan
+     * @return a vector of geometry_msgs:PoseStamped from the start to the goal
+     */
+     std::vector<geometry_msgs::PoseStamped>
+       BuildPlan(int goal_index,
+                 const geometry_msgs::PoseStamped& start,
+                 const geometry_msgs::PoseStamped& goal);
 
-        costmap_2d::Costmap2DROS* cost_map_ros;
+     /**
+     * @brief returns the best path
+     * @param start starting point of robot
+     * @param goal goal point
+     * @return returns the index of the point that reaches the goal
+     */
+     int FindPath(const geometry_msgs::PoseStamped& start,
+                  const geometry_msgs::PoseStamped& goal);
 
-        costmap_2d::Costmap2D* cost_map;
+     /**
+     * @brief Checks if the path is safe between start_point and end_point
+     * @param start_point starting point location
+     * @param end_point ending point location
+     * @return true if path between points does not intersect obstacles
+     */
+     bool IsSafe(std::pair<float, float> start_point,
+                 std::pair<float, float> end_point);
 
-        int max_iterations;
+ private:
+     /**
+     * @brief ROS node handle
+     */
+     ros::NodeHandle node_handle_;
 
-        base_local_planner::WorldModel* world_model;
+     /**
+     * @brief obstacles
+     */
+     std::vector<bool> obstacle_map_;
 
-        float dq_step;
+     /**
+     * @brief The ROS wrapper for the costmap the controller will use
+     */
+     costmap_2d::Costmap2DROS* costmap_ros_;
 
-        float dq;
+     /**
+     * @brief The ROS wrapper for the costmap the controller will use
+     */
+     costmap_2d::Costmap2D* costmap_;
 
-        float goal_radius; // distance close to the goal
+     /**
+     * @brief the max number of iterations to try and find a path
+     */
+     int max_iterations_;
 
-        float x_start;
+     /**
+     * @brief the current number of iterations
+     */
+     int current_iterations_;
 
-        float y_start;
+     /**
+     * @brief World model associated to the costmap
+     */
+     base_local_planner::WorldModel* world_model_;
 
-        std::vector<turtlebot_planner::Vertex> V;
+     /**
+     * @brief Check if the global planner is initialized
+     */
+     bool initialized_;
 
-        float x_goal;
+     /**
+     * @brief How close to the goal is close enough
+     */
+     float goal_radius_;
 
-        float y_goal;
+     /**
+     * @brief Size of the step the RRT planner takes
+     */
+     float step_size_;
 
-        bool initialized;
+     /**
+     * @brief Size of the sub-step used for collision checking
+     */
+     float delta_;
 
-        unsigned int map_width;
+     /**
+     * @brief x coordinate of robot origin
+     */
+     float x_origin_;
 
-        unsigned int map_height;
-    };
-}
+     /**
+     * @brief y coordinate of robot origin
+     */
+     float y_origin_;
+
+     /**
+     * @brief x coordinate of goal
+     */
+     float x_goal_;
+
+     /**
+     * @brief y coordinate of goal
+     */
+     float y_goal_;
+
+     /**
+     * @brief width of 2d map in cells
+     */
+     unsigned int map_width_cells_;
+
+     /**
+     * @brief height of 2d map in cells
+     */
+     unsigned int map_height_cells_;
+
+     /**
+     * @brief List of vertices
+     */
+     std::vector<turtlebot_planner::Vertex> vertex_list_;
+};
+}  // namespace turtlebot_planner
+#endif  // INCLUDE_turtlebot_planner_turtlebot_planner_H_

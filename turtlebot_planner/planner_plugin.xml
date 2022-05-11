@@ -1,0 +1,7 @@
+<library path="lib/libturtlebot_planner">
+  <class name="turtlebot_planner/Planner" type="turtlebot_planner::Planner" base_class_type="nav_core::BaseGlobalPlanner">
+    <description>
+      This is an RRT global planner plugin.
+    </description>
+  </class>
+</library>

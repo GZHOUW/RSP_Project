@@ -1,3 +1,4 @@
+
 shutdown_costmaps: false
 
 controller_frequency: 5.0
@@ -14,4 +15,4 @@ max_planning_retries: 1
 
 base_local_planner: "dwa_local_planner/DWAPlannerROS"
 
-base_global_planner: "turtlebot_planner/Planner" 
+base_global_planner: "turtlebot_planner/Planner"
