@@ -6,65 +6,93 @@
 PLUGINLIB_EXPORT_CLASS(turtlebot_planner::Planner, nav_core::BaseGlobalPlanner)
 
 namespace turtlebot_planner {
-  Planner::Planner()
-    : costmap_ros_(nullptr), initialized_(false) { }
-
-  Planner::Planner(std::string name,
-                         costmap_2d::Costmap2DROS* costmap_ros)
-    : costmap_ros_(costmap_ros) {
-    initialize(name, costmap_ros);
+  Planner::Planner(){
+    map_ros = nullptr;
+    initialized = false;
   }
 
-  void Planner::initialize(std::string name,
-                              costmap_2d::Costmap2DROS* costmap_ros) {
-    if (!initialized_) {
+  Planner::Planner(std::string name, costmap_2d::Costmap2DROS* m){
+    map_ros = m;
+    initialize(name, m);
+  }
+
+  void Planner::initialize(std::string name, costmap_2d::Costmap2DROS* m) {
+    /*
+    if (!initialized) {
       // Initialize map
-      costmap_ros_ = costmap_ros;
-      costmap_ = costmap_ros->getCostmap();
+      map_ros = m;
+      map = m->getCostmap();
 
       // Initialize node handle
       ros::NodeHandle node("~/turtlebot_planner");
-      node_handle_ = node;
-      world_model_ = new base_local_planner::CostmapModel(*costmap_);
+      nh = node;
+      model = new base_local_planner::CostmapModel(*map);
 
-      node_handle_.getParam("/move_base/step_size_", step_size_);
-      node_handle_.getParam("/move_base/delta_", delta_);
-      node_handle_.getParam("/move_base/goal_radius_", goal_radius_);
-      node_handle_.getParam("/move_base/max_iterations_", max_iterations_);
-      ROS_INFO("Step size: %.2f, goal radius: %.2f, delta: %.2f, max "
-               "iterations: %d", step_size_, goal_radius_, delta_,
-               max_iterations_);
+      nh.getParam("/move_base/dq", dq);
+      nh.getParam("/move_base/dq_step", dq_step);
+      nh.getParam("/move_base/goal_radius", goal_radius);
+      nh.getParam("/move_base/max_iterations", max_iterations);
+      ROS_INFO("Step size: %.2f, goal radius: %.2f, dq_step: %.2f, max "
+               "iterations: %d", dq, goal_radius, dq_step,
+               max_iterations);
       current_iterations_ = 0;
 
       // Get obstacles in the costmap
-      map_width_cells_ = costmap_-> getSizeInCellsX();
-      map_height_cells_ = costmap_-> getSizeInCellsY();
+      width = map-> getSizeInCellsX();
+      height = map-> getSizeInCellsY();
 
-      for (unsigned int iy = 0; iy < map_height_cells_; iy++) {
-        for (unsigned int ix = 0; ix < map_width_cells_; ix++) {
-          unsigned char cost = static_cast<int>(costmap_->getCost(ix, iy));
+      for (unsigned int iy = 0; iy < height; iy++) {
+        for (unsigned int ix = 0; ix < width; ix++) {
+          unsigned char cost = static_cast<int>(map->getCost(ix, iy));
           if (cost >= 115)
-            obstacle_map_.push_back(false);
+            obstacles.push_back(false);
           else
-            obstacle_map_.push_back(true);
+            obstacles.push_back(true);
         }
       }
 
       // Display info message
       ROS_INFO("RRT planner initialized successfully.");
-      initialized_ = true;
+      initialized = true;
     } else {
       ROS_WARN("RRT planner has already been initialized.");
+    }
+    */
+    if (!initialized){
+      map_ros = m;
+      map = map_ros->getCostmap();
+      nh = ros::NodeHandle("~/turtlebot_planner");
+      model = new base_local_planner::CostmapModel(*map);
+
+      nh.getParam("/move_base/dq", dq);
+      nh.getParam("/move_base/dq_step", dq_step);
+      nh.getParam("/move_base/goal_radius", goal_radius);
+      nh.getParam("/move_base/max_iterations", max_iterations);
+
+      width = map->getSizeInCellsX();
+      height = map->getSizeInCellsY();
+
+      // fill the obstacle vector
+      for (unsigned int x = 0; x < width; x++){
+        for (unsigned int y = 0; y < height; y++){
+          int cost = map->getCost(x, y);
+          if (cost >= 115){
+            // true means there is an obstacle
+            obstacles.push_back(false);
+          }
+          else{
+            obstacles.push_back(true);
+          }
+        }
+      }
+      initialized = true;
     }
   }
 
   bool Planner::makePlan(const geometry_msgs::PoseStamped& start,
                             const geometry_msgs::PoseStamped& goal,
                             std::vector<geometry_msgs::PoseStamped>& plan) {
-    // Check if we've initialized, if not error
-    if (!initialized_) {
-      ROS_ERROR("RRT planner has not been initialized, please call "
-                "initialize() to use the planner");
+    if (!initialized) {
       return false;
     }
 
@@ -77,24 +105,23 @@ namespace turtlebot_planner {
     plan.clear();
     current_iterations_ = 0;
     ROS_INFO("Current iterations reset to %d.", current_iterations_);
-    vertex_list_.clear();
+    V.clear();
 
     // reset origin and goal
-    x_origin_ = start.pose.position.x;
-    y_origin_ = start.pose.position.y;
-    x_goal_ = goal.pose.position.x;
-    y_goal_ = goal.pose.position.y;
-
+    x_start = start.pose.position.x;
+    y_start = start.pose.position.y;
+    x_goal = goal.pose.position.x;
+    y_goal = goal.pose.position.y;
     // Initialize root node
-    turtlebot_planner::Vertex root(x_origin_, y_origin_, 0, -1);
-    vertex_list_.push_back(root);
+    turtlebot_planner::Vertex root(x_start, y_start, 0, -1);
+    V.push_back(root);
 
     // Make sure that the goal header frame is correct
     // Goals are set within rviz
-    if (goal.header.frame_id != costmap_ros_->getGlobalFrameID()) {
+    if (goal.header.frame_id != map_ros->getGlobalFrameID()) {
       ROS_ERROR("This planner will only accept goals in the %s frame,"
                 "the goal was sent to the %s frame.",
-                costmap_ros_->getGlobalFrameID().c_str(),
+                map_ros->getGlobalFrameID().c_str(),
                 goal.header.frame_id.c_str());
       return false;
     }
@@ -123,10 +150,10 @@ namespace turtlebot_planner {
     std::pair<float, float> random_point;
     std::random_device rd;
     std::mt19937 gen(rd());
-    float map_width = costmap_->getSizeInMetersX();
-    float map_height = costmap_->getSizeInMetersY();
-    std::uniform_real_distribution<> x(-map_width, map_width);
-    std::uniform_real_distribution<> y(-map_height, map_height);
+    float width_m = map->getSizeInMetersX();
+    float height_m = map->getSizeInMetersY();
+    std::uniform_real_distribution<> x(-width_m, width_m);
+    std::uniform_real_distribution<> y(-height_m, height_m);
 
     random_point.first = x(gen);
     random_point.second = y(gen);
@@ -141,7 +168,7 @@ namespace turtlebot_planner {
     current_iterations_ = 0;
 
     // Run until we either find the goal or reach the max iterations
-    while (!done && current_iterations_ < max_iterations_) {
+    while (!done && current_iterations_ < max_iterations) {
       ROS_DEBUG("Finding the path.");
 
       // get a random point on the map
@@ -153,9 +180,9 @@ namespace turtlebot_planner {
       // find the closest known vertex to that point
       int closest_vertex = Planner::GetClosestVertex(random_point);
       ROS_DEBUG("Closest point %.5f, %.5f, index: %d.",
-                vertex_list_.at(closest_vertex).get_location().first,
-                vertex_list_.at(closest_vertex).get_location().second,
-                vertex_list_.at(closest_vertex).get_index());
+                V.at(closest_vertex).get_location().first,
+                V.at(closest_vertex).get_location().second,
+                V.at(closest_vertex).get_index());
 
       // try to move from the closest known vertex towards the random point
       if (Planner::MoveTowardsPoint(closest_vertex, random_point)) {
@@ -165,7 +192,7 @@ namespace turtlebot_planner {
         current_iterations_++;
 
         // check if we've reached our goal
-        int new_vertex = vertex_list_.back().get_index();
+        int new_vertex = V.back().get_index();
         done = ReachedGoal(new_vertex);
 
         if (done) {
@@ -173,7 +200,7 @@ namespace turtlebot_planner {
         }
       }
 
-      if (current_iterations_ == max_iterations_)
+      if (current_iterations_ == max_iterations)
         ROS_INFO("Max iterations reached, no plan found.");
     }
     return goal_index;
@@ -189,7 +216,7 @@ namespace turtlebot_planner {
     float current_distance = std::numeric_limits<float>::infinity();
 
     // iterate through the vertex list to find the closest
-    for (turtlebot_planner::Vertex v : vertex_list_) {
+    for (turtlebot_planner::Vertex v : V) {
       current_distance = GetDistance(v.get_location(), random_point);
 
       // If the current distance is closer than what was previously
@@ -224,18 +251,18 @@ namespace turtlebot_planner {
   bool Planner::MoveTowardsPoint(int closest_vertex,
                                     std::pair<float, float> random_point) {
     ROS_DEBUG("In MoveTowardsPoint");
-    float x_closest = vertex_list_.at(closest_vertex).get_location().first;
-    float y_closest = vertex_list_.at(closest_vertex).get_location().second;
+    float x_closest = V.at(closest_vertex).get_location().first;
+    float y_closest = V.at(closest_vertex).get_location().second;
     float x_random = random_point.first;
     float y_random = random_point.second;
 
     // get the angle between the random point and our closest point (in rads)
     float theta = atan2(y_random - y_closest, x_random - x_closest);
 
-    // proposed new point step_size_ from our closest vertex towards
+    // proposed new point dq from our closest vertex towards
     // the random point
-    float new_x = x_closest + step_size_ * cos(theta);
-    float new_y = y_closest + step_size_ * sin(theta);
+    float new_x = x_closest + dq * cos(theta);
+    float new_y = y_closest + dq * sin(theta);
 
     std::pair<float, float> proposed_point(new_x, new_y);
     std::pair<float, float> closest_point(x_closest, y_closest);
@@ -243,8 +270,8 @@ namespace turtlebot_planner {
     // Check if the path between closest_vertex and the new point
     // is safe
     if (IsSafe(closest_point, proposed_point)) {
-      // If safe, add new Vertex to the back of vertex_list_
-      turtlebot_planner::Vertex new_vertex(new_x, new_y, vertex_list_.size(),
+      // If safe, add new Vertex to the back of V
+      turtlebot_planner::Vertex new_vertex(new_x, new_y, V.size(),
                                        closest_vertex);
       ROS_DEBUG("Added new vertex at: %.5f, %.5f, index: %d",
                new_x, new_y, new_vertex.get_index());
@@ -263,16 +290,16 @@ namespace turtlebot_planner {
 
     // first check to make sure the end point is safe. Saves us processing
     // time if somebody wants to jump into the middle of an obstacle
-    costmap_->worldToMap(end_point.first, end_point.second, map_x, map_y);
-    int idx = map_y * map_height_cells_ + map_x;
-    int map_size = obstacle_map_.size();
+    map->worldToMap(end_point.first, end_point.second, map_x, map_y);
+    int idx = map_y * height + map_x;
+    int map_size = obstacles.size();
     if (idx <0 || idx >= map_size){
       return false;
     }
-    if (!obstacle_map_.at(map_y * map_height_cells_ + map_x))
+    if (!obstacles.at(map_y * height + map_x))
         return false;
 
-    // check the path at intervals of delta for collision
+    // check the path at intervals of dq_step for collision
     float theta = atan2(end_point.second - start_point.second,
                         end_point.first - start_point.first);
     float current_x = start_point.first;
@@ -281,21 +308,20 @@ namespace turtlebot_planner {
     ROS_DEBUG("Testing proposed point %.5f, %.5f.", end_point.first,
                                                     end_point.second);
 
-    while (GetDistance(std::pair<float, float>(current_x, current_y),
-                       end_point) > delta_) {
+    while (GetDistance(std::pair<float, float>(current_x, current_y), end_point) > dq_step) {
       // increment towards end point
-      current_x += delta_ * cos(theta);
-      current_y += delta_ * sin(theta);
+      current_x += dq_step * cos(theta);
+      current_y += dq_step * sin(theta);
 
       // convert world coords to map coords
-      costmap_->worldToMap(current_x, current_y, map_x, map_y);
+      map->worldToMap(current_x, current_y, map_x, map_y);
 
       // check for collision
-      int idx = map_y * map_height_cells_ + map_x;
+      int idx = map_y * height + map_x;
       if (idx <0 || idx >= map_size){
         return false;
       }
-      if (!obstacle_map_.at(idx))
+      if (!obstacles.at(idx))
         return false;
     }
     return true;
@@ -305,12 +331,12 @@ namespace turtlebot_planner {
     ROS_DEBUG("In ReachedGoal, vertex index: %d.", new_vertex);
 
     // save our goal and current location as pairs
-    std::pair<float, float> goal(x_goal_, y_goal_);
+    std::pair<float, float> goal(x_goal, y_goal);
     std::pair<float, float> current_location;
     current_location.first =
-      vertex_list_.at(new_vertex).get_location().first;
+      V.at(new_vertex).get_location().first;
     current_location.second =
-      vertex_list_.at(new_vertex).get_location().second;
+      V.at(new_vertex).get_location().second;
 
     ROS_DEBUG("cx: %.5f, cy: %.5f, gx: %.5f, gy: %.5f",
               current_location.first,
@@ -319,11 +345,11 @@ namespace turtlebot_planner {
               goal.second);
 
     // Check distance between current point and goal, if distance is less
-    // than goal_radius_ return true, otherwise return false
+    // than goal_radius return true, otherwise return false
     float distance = GetDistance(current_location, goal);
     ROS_DEBUG("Distance to goal: %.5f", distance);
 
-    if (distance <= goal_radius_)
+    if (distance <= goal_radius)
       return true;
     else
       return false;
@@ -350,7 +376,7 @@ namespace turtlebot_planner {
       int current_index = goal_index;
       while (current_index > 0) {
         index_path.push_front(current_index);
-        current_index = vertex_list_.at(current_index).get_parent();
+        current_index = V.at(current_index).get_parent();
       }
       index_path.push_front(0);
 
@@ -361,8 +387,8 @@ namespace turtlebot_planner {
         } else {
           geometry_msgs::PoseStamped pos;
 
-          pos.pose.position.x = vertex_list_.at(i).get_location().first;
-          pos.pose.position.y = vertex_list_.at(i).get_location().second;
+          pos.pose.position.x = V.at(i).get_location().first;
+          pos.pose.position.y = V.at(i).get_location().second;
           pos.pose.position.z = 0.0;
 
           pos.pose.orientation = tf::createQuaternionMsgFromYaw(0);
@@ -372,7 +398,7 @@ namespace turtlebot_planner {
       plan.push_back(goal);
       unsigned int map_x, map_y;
       for (geometry_msgs::PoseStamped p : plan) {
-        costmap_->worldToMap(p.pose.position.x, p.pose.position.y,
+        map->worldToMap(p.pose.position.x, p.pose.position.y,
                              map_x, map_y);
         ROS_INFO("x: %.2f (%d), y: %.2f (%d)", p.pose.position.x,
                                                map_x,
