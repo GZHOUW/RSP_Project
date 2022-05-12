@@ -30,6 +30,7 @@ This package is a planner for turtlebot2. The planner uses the RRT algorithm, on
 - turtlebot_navigation
     
     Install with command: `sudo apt-get install ros-kinetic turtlebot-navigation`
+- move_base_msgs
     
 
 ## Run Demo
