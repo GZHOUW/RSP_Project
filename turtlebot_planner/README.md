@@ -49,5 +49,4 @@ This package is a planner for turtlebot2. The planner uses the RRT algorithm, on
     Wait a few seconds for all the nodes to start up. Do not input commands until you see “odom received” in terminal. 
     
 3. In rviz, use “2D Nav Goal” to input a goal pose for the robot to move to. You may see error messages in terminal, but they do not affect the process of the program. The robot model in simulation (both rviz and gazebo) will start to move towards the goal pose.
-    
-    ![short demo.gif](Turtlebot%20Planner%20935a54731aea4b82a81d3ccd0e4b263d/short_demo.gif)
+<img src="short_demo.gif" width = "800"/>
