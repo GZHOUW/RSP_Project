@@ -14,9 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   nav_core
   pluginlib
   roscpp
-  roslint
-  tf
-  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -111,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES turtlebot_planner
-  CATKIN_DEPENDS base_local_planner costmap_2d nav_core pluginlib roscpp visualization_msgs
+  CATKIN_DEPENDS base_local_planner costmap_2d nav_core pluginlib roscpp
 #  DEPENDS system_lib
 )
 
