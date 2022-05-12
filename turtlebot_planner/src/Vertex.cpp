@@ -7,5 +7,4 @@ namespace turtlebot_planner {
     this->idx = idx;
     this->parent = parent;
   }
-
 }

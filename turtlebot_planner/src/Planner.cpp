@@ -1,4 +1,3 @@
-#include <pluginlib/class_list_macros.h>
 #include "turtlebot_planner/Planner.hpp"
 
 // Register as a BaseGlobalPlanner plugin
@@ -47,9 +46,7 @@ namespace turtlebot_planner {
     }
   }
 
-  bool Planner::makePlan(const geometry_msgs::PoseStamped& start,
-                            const geometry_msgs::PoseStamped& goal,
-                            std::vector<geometry_msgs::PoseStamped>& path) {
+  bool Planner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& path) {
     if (!initialized) {
       return false;
     }
@@ -75,7 +72,7 @@ namespace turtlebot_planner {
     }
 
     // Run RTT algorithm and find the path
-    int goal_idx = findPath(start, goal);
+    int goal_idx = findPath();
     path = generatePath(goal_idx, start, goal);
     if (path.size()> 1){
       std::cout << "path found, printing the path" << std::endl;
@@ -89,28 +86,9 @@ namespace turtlebot_planner {
     return path.size() > 1;
   }
 
-  state Planner::randomState() {
-    // generate random x and y coords within map bounds
-    
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    float width_m = map->getSizeInMetersX();
-    float height_m = map->getSizeInMetersY();
-
-    std::uniform_real_distribution<> x(-width_m, width_m);
-    std::uniform_real_distribution<> y(-height_m, height_m);
-
-    state q_rand = {x(gen), y(gen)};
-
-    return q_rand;
-  }
-
-  int Planner::findPath(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal) {
+  int Planner::findPath() {
     cur_iterations = 0;
-
     while (cur_iterations < max_iterations){
-      
       // generate a random state
       state q_rand = randomState();
       
@@ -121,9 +99,6 @@ namespace turtlebot_planner {
         cur_iterations++;
         // Create a Vertex for q_new
         int new_idx = V.back().idx;
-        //turtlebot_planner::Vertex v_new(q_new.first, q_new.second, new_idx, q_near_idx);
-        //V.push_back(v_new);
-
         if (isGoal(new_idx)){
           return new_idx; // goal_idx found
         }
@@ -131,6 +106,21 @@ namespace turtlebot_planner {
     }
     std::cout << "max iterations reached" << std::endl;
     return -1; // max iteration reached, no path found
+  }
+
+  state Planner::randomState() {
+    // generate random x and y coords within map bounds
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    float width_m = map->getSizeInMetersX();
+    float height_m = map->getSizeInMetersY();
+
+    std::uniform_real_distribution<> x(-width_m, width_m);
+    std::uniform_real_distribution<> y(-height_m, height_m);
+
+    state q_rand = {x(gen), y(gen)};
+    return q_rand;
   }
 
   int Planner::nearestNeighbor(state q_rand) {
@@ -173,53 +163,59 @@ namespace turtlebot_planner {
 
     state q_new = {x_new, y_new};
    
-
     if (isFree(q_near, q_new)) {
       turtlebot_planner::Vertex new_vertex(x_new, y_new, V.size(), q_near_idx);
-      addVertex(new_vertex);
+      V.push_back(new_vertex);
       return true;
     }
 
     return false;
   }
 
-  bool Planner::isFree(state start_point,
-                           state end_point) {
-    unsigned int map_x, map_y;
+  bool Planner::isFree(state q1, state q2) {
+    float x1 = q1.first;
+    float y1 = q1.second;
+    float x2 = q2.first;
+    float y2 = q2.second;
 
-    // first check to make sure the end point is safe. Saves us processing
-    // time if somebody wants to jump into the middle of an obstacle
-    map->worldToMap(end_point.first, end_point.second, map_x, map_y);
-    int idx = map_y * height + map_x;
+    // check if q2 is free
+    unsigned int x_map, y_map;
     int map_size = obstacles.size();
-    if (idx <0 || idx >= map_size){
+    map->worldToMap(x2, y2, x_map, y_map);
+    int idx = y_map * height + x_map;
+    if (!obstacles[idx]){
       return false;
     }
-    if (!obstacles.at(map_y * height + map_x))
-        return false;
 
-    // check the path at intervals of dq_step for collision
-    float theta = atan2(end_point.second - start_point.second,
-                        end_point.first - start_point.first);
-    float current_x = start_point.first;
-    float current_y = start_point.second;
+    // check if the edge is free
+    float x_diff = x2 - x1;
+    float y_diff = y2 - y2;
+    float d = dist(q1, q2);
+    float x_dir = x_diff/d;
+    float y_dir = y_diff/d;
 
-    while (dist(state(current_x, current_y), end_point) > dq_step) {
-      // increment towards end point
-      current_x += dq_step * cos(theta);
-      current_y += dq_step * sin(theta);
+    float x_cur = x1;
+    float y_cur = y1;
 
-      // convert world coords to map coords
-      map->worldToMap(current_x, current_y, map_x, map_y);
+    state cur = {x_cur, y_cur};
 
-      // check for collision
-      int idx = map_y * height + map_x;
+    while (dist(cur, q2) > dq_step){
+      x_cur += x_dir * dq_step;
+      y_cur += y_dir * dq_step;
+
+      // check for collision 
+      map->worldToMap(x_cur, y_cur, x_map, y_map);
+      int idx = y_map * height + x_map;
       if (idx <0 || idx >= map_size){
         return false;
       }
-      if (!obstacles.at(idx))
+      if (!obstacles[idx]){
         return false;
+      }
+
+      cur = {x_cur, y_cur};
     }
+    // no collision found, return true
     return true;
   }
 
@@ -233,48 +229,29 @@ namespace turtlebot_planner {
     return d < goal_radius;
   }
 
-  std::vector<geometry_msgs::PoseStamped> Planner::generatePath(int goal_index,
-                           const geometry_msgs::PoseStamped& start,
-                           const geometry_msgs::PoseStamped& goal) {
-      ROS_INFO("Building the path.");
-
-      // reset our current iterations
+  std::vector<geometry_msgs::PoseStamped> Planner::generatePath(int goal_idx, const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal) {
       cur_iterations = 0;
       std::vector<geometry_msgs::PoseStamped> path;
-
-      // no path found
-      if (goal_index == -1)
-        return path;
-
-      // The list of vertex indices we pass through to get to the goal
-      std::deque<int> index_path;
-      int current_index = goal_index;
-      while (current_index > 0) {
-        index_path.push_front(current_index);
-        current_index = V[current_index].parent;
-      }
-      index_path.push_front(0);
-
-      // build the path back up in PoseStamped messages
-      for (int i : index_path) {
-        if (i == 0) {
-          path.push_back(start);
-        } else {
-          geometry_msgs::PoseStamped pos;
-
-          pos.pose.position.x = V[i].x;
-          pos.pose.position.y = V[i].y;
-          pos.pose.position.z = 0.0;
-
-          pos.pose.orientation = tf::createQuaternionMsgFromYaw(0);
-          path.push_back(pos);
-        }
-      }
       path.push_back(goal);
-      unsigned int map_x, map_y;
-      for (geometry_msgs::PoseStamped p : path) {
-        map->worldToMap(p.pose.position.x, p.pose.position.y, map_x, map_y);
+
+      int i = goal_idx;
+      while (i != -1){
+        // get the ith vertex from V
+        turtlebot_planner::Vertex v = V[i];
+
+        // convert v to a poseStamped
+        geometry_msgs::PoseStamped p;
+        p.pose.position.x = v.x;
+        p.pose.position.y = v.y;
+        p.pose.position.z = 0.0;
+        p.pose.orientation = tf::createQuaternionMsgFromYaw(0);
+        path.push_back(p);
+        // go to parent idx
+        i = v.parent;
       }
+      path.push_back(start);
+      // reverse path
+      std::reverse(path.begin(), path.end());
       return path;
   }
 };

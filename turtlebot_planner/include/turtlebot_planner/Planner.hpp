@@ -1,28 +1,14 @@
-
-/** include ROS libraries **/
 #include <ros/ros.h>
-
 #include <move_base_msgs/MoveBaseAction.h>
-
-/** for global path planner interface **/
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
 #include <nav_core/base_global_planner.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <angles/angles.h>
 #include <base_local_planner/world_model.h>
 #include <base_local_planner/costmap_model.h>
-
-/** include standard libraries **/
-#include <iostream>
+#include <pluginlib/class_list_macros.h>
 #include <cmath>
-#include <set>
-#include <string>
-#include <vector>
-#include <utility>
-#include <boost/random.hpp>
-
-/** Local includes **/
+#include <random>
 #include "turtlebot_planner/Vertex.hpp"
 
 typedef std::pair<float, float> state;
@@ -32,49 +18,27 @@ class Planner : public nav_core::BaseGlobalPlanner {
  public:
      Planner();
 
-     Planner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+     Planner(std::string, costmap_2d::Costmap2DROS*);
 
-     void initialize(std::string name,
-                     costmap_2d::Costmap2DROS* costmap_ros);
+     void initialize(std::string, costmap_2d::Costmap2DROS*);
 
-     bool makePlan(const geometry_msgs::PoseStamped& start,
-                   const geometry_msgs::PoseStamped& goal,
-                   std::vector<geometry_msgs::PoseStamped>& path);
-
-    std::vector<bool> getObstacleMap() {
-      return obstacles;
-    }
-
-    std::vector<turtlebot_planner::Vertex> getVertexTree() {
-      return V;
-    }
+     bool makePlan(const geometry_msgs::PoseStamped&, const geometry_msgs::PoseStamped&, std::vector<geometry_msgs::PoseStamped>&);
 
      state randomState();
 
-     int nearestNeighbor(state random_point);
+     int nearestNeighbor(state);
 
-    void addVertex(turtlebot_planner::Vertex new_vertex) {
-      V.push_back(new_vertex);
-    }
+     float dist(state, state);
 
-     float dist(state start_point,
-                       state end_point);
+     bool newState(int, state);
 
-     bool newState(int closest_vertex,
-                           state random_point);
+     bool isGoal(int);
 
-     bool isGoal(int new_vertex);
+     std::vector<geometry_msgs::PoseStamped> generatePath(int, const geometry_msgs::PoseStamped&, const geometry_msgs::PoseStamped&);
 
-     std::vector<geometry_msgs::PoseStamped>
-       generatePath(int goal_index,
-                 const geometry_msgs::PoseStamped& start,
-                 const geometry_msgs::PoseStamped& goal);
+     int findPath();
 
-     int findPath(const geometry_msgs::PoseStamped& start,
-                  const geometry_msgs::PoseStamped& goal);
-
-     bool isFree(state start_point,
-                 state end_point);
+     bool isFree(state, state);
 
  private:
      ros::NodeHandle nh;
@@ -85,9 +49,7 @@ class Planner : public nav_core::BaseGlobalPlanner {
 
      costmap_2d::Costmap2D* map;
 
-     int max_iterations;
-
-     int cur_iterations;
+     int max_iterations, cur_iterations;
 
      base_local_planner::WorldModel* model;
 
@@ -95,17 +57,9 @@ class Planner : public nav_core::BaseGlobalPlanner {
 
      float goal_radius;
 
-     float dq;
+     float dq, dq_step;
 
-     float dq_step;
-
-     float x_start;
-
-     float y_start;
-
-     float x_goal;
-
-     float y_goal;
+     float x_start, y_start, x_goal, y_goal;
 
      unsigned int width;
 

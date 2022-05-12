@@ -13,7 +13,7 @@
   <arg name="custom_param_file" default="$(find turtlebot_navigation)/param/dummy.yaml"/>
   
   <arg name="dq" default="2.5"/>
-  <arg name="dq_step" default="$(eval arg('dq') / 2)"/>
+  <arg name="dq_step" default="0.5"/>
   <arg name="max_iterations" default="200000"/>
   <arg name="goal_radius" default="1.0"/> 
 

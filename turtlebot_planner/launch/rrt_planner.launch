@@ -51,7 +51,7 @@
   
   <!-- Move base -->
   <arg name="dq" default="2.5"/>
-  <arg name="dq_step" default="$(eval arg('dq') / 2)"/>
+  <arg name="dq_step" default="0.5"/>
   <arg name="max_iterations" default="200000"/>
   <arg name="goal_radius" default="1.0"/>      
   <include file="$(find turtlebot_planner)/launch/includes/move_base.launch.xml">
