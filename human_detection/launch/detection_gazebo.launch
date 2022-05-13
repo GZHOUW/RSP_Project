@@ -1,7 +1,0 @@
-<launch>
-
-    <include file = "$(find rplidar_ros)/launch/view_rplidar.launch "/>
-    <node pkg="human_detection" type ="lidar_sub_node"  name = "lidar_sub"/>
-    <node pkg="human_detection" type ="detector_node"  name = "detector"/>
-
-</launch>
