@@ -1,4 +1,4 @@
-image: /home/guangwei/rsp_workspace/src/turtlebot_planner/maps/map1.pgm
+image: map1.pgm
 resolution: 0.050000
 origin: [-10.000000, -10.000000, 0.000000]
 negate: 0

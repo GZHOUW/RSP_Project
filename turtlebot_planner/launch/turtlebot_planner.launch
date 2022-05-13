@@ -1,8 +1,14 @@
 <launch>
-  <!-- Launch the map server -->
-  <arg name="map_name" default="map1"/>
+
+  <arg name="base"       value="$(optenv TURTLEBOT_BASE kobuki)"/> <!-- create, roomba -->
+  <arg name="battery"    value="$(optenv TURTLEBOT_BATTERY /proc/acpi/battery/BAT0)"/>  <!-- /proc/acpi/battery/BAT0 -->
+  <arg name="stacks"     value="$(optenv TURTLEBOT_STACKS hexagons)"/>  <!-- circles, hexagons -->
+  <arg name="3d_sensor"  value="$(optenv TURTLEBOT_3D_SENSOR kinect)"/>  <!-- kinect, asus_xtion_pro -->
+
+
+<arg name="map_name" default="map1"/>
   <node name="map_server" pkg="map_server" type="map_server" args="$(find turtlebot_planner)/maps/$(arg map_name).yaml" respawn="false">
-    <param name="frame_id" value="map"/>
+    <param name="frame_id" value="/map"/>
   </node>
   
   <!-- Launch Gazebo -->
@@ -14,41 +20,29 @@
     <arg name="gui" value="$(arg gui)"/>
     <arg name="world_name" value="$(find turtlebot_planner)/maps/$(arg map_name).world"/>
   </include>
-  
-  <!-- Launch robot model -->
-  <arg name="base" value="$(optenv TURTLEBOT_BASE kobuki)"/>
-  <arg name="stacks" value="$(optenv TURTLEBOT_STACKS hexagons)"/> 
-  <arg name="3d_sensor" value="$(optenv TURTLEBOT_3D_SENSOR kinect)"/>
-  
+
   <include file="$(find turtlebot_gazebo)/launch/includes/$(arg base).launch.xml">
     <arg name="base" value="$(arg base)"/>
     <arg name="stacks" value="$(arg stacks)"/>
     <arg name="3d_sensor" value="$(arg 3d_sensor)"/>
   </include>
-  
+
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
-    <param name="publish_frequency" type="double" value="30.0"/>
-  </node>    
-  
+    <param name="publish_frequency" type="double" value="30.0" />
+  </node>
+
   <!-- Fake laser -->
   <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" args="manager"/>
   <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan"
         args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager">
     <param name="scan_height" value="10"/>
-    <param name="output_frame_id" value="/camera_depth_frame"/>
+    <param name="output_frame_id" value="camera_depth_frame"/>
     <param name="range_min" value="0.45"/>
     <remap from="image" to="/camera/depth/image_raw"/>
     <remap from="scan" to="/scan"/>
-  </node>  
-  
-  <!-- Launch Rviz -->
-  <arg name="target" default="all"/>
-  
-  <node name="rviz" pkg="rviz" type="rviz" output="screen" respawn="true" args="-d $(find turtlebot_planner)/maps/$(arg map_name).rviz"/>
+  </node>
 
-  <!-- Launch AMCL -->
-  <include file="$(find turtlebot_planner)/launch/includes/amcl.launch.xml"/>
-  
+<!--  ************** Navigation  ***************  -->
   <!-- Move base -->
   <arg name="dq" default="2.5"/>
   <arg name="dq_step" default="1.25"/>
@@ -61,4 +55,13 @@
     <arg name="max_iterations" value="$(arg max_iterations)"/>
     <arg name="goal_radius" value="$(arg goal_radius)"/>    
   </include>
+
+
+
+  <include file="$(find turtlebot_planner)/launch/includes/amcl.launch.xml"/>
+
+  <!-- Launch Rviz -->
+  <arg name="target" default="all"/>
+  <node name="rviz" pkg="rviz" type="rviz" output="screen" respawn="true" args="-d $(find turtlebot_planner)/maps/$(arg map_name).rviz"/>
+
 </launch>
