@@ -49,3 +49,5 @@ This package aims to allow a turtlebot to detect its surrounding environment and
     Wait a few seconds for all the nodes to start up. 
     
 3. In the terminal, you will see the number of point cloud points detected, as well the number of objects detected nearby. You can use teleop commands to move the robot around, and the number of objects nearby will change accordingly.
+
+<img src="demo_detect.gif" width = "800"/>
