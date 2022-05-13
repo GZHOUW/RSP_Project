@@ -1,16 +1,21 @@
 <launch>
-  <arg name="x" default="-2.0"/>
-  <arg name="y" default="0.0"/>
-  <arg name="theta" default="0.0"/>
-  <arg name="step_length" default="0.5"/>
-  <arg name="step_size" default="30"/>
+    <arg name="x" default="-2.0"/>
+    <arg name="y" default="0.0"/>
+    <arg name="theta" default="0.0"/>
+    <arg name="step_length" default="0.5"/>
+    <arg name="step_size" default="30"/>
+    <!-- remember to change .yaml file in simulation package! -->
+    <include file="$(find simulation)/launch/turtlebot_gazebo.launch">
+      <arg name="initial_pose_x" value="$(arg x)" />
+      <arg name="initial_pose_y" value="$(arg y)"/>
+    </include>
 
-      <node pkg="move_turtlebot" type="move_turtlebot_node" name="random_move" output="screen">
-        <param name="x" value ="$(arg x)" />
-        <param name="y" value ="$(arg y)" />
-        <param name="theta" value ="$(arg theta)" />
-        <param name="step_length" value ="$(arg step_length)" />
-        <param name="step_size" value ="$(arg step_size)" />
-      </node>
+    <node pkg="move_turtlebot" type="move_turtlebot_node" name="random_move" output="screen">
+      <param name="x" value ="$(arg x)" />
+      <param name="y" value ="$(arg y)" />
+      <param name="theta" value ="$(arg theta)" />
+      <param name="step_length" value ="$(arg step_length)" />
+      <param name="step_size" value ="$(arg step_size)" />
+    </node>
 
 </launch>
