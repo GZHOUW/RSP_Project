@@ -2,6 +2,11 @@
 
     <arg name="path" default="$(find follow_path)/config/path.txt" />    
 
+    <include file="$(find simulation)/launch/turtlebot_gazebo.launch">
+      <arg name="initial_pose_x" value="-2.0" />
+      <arg name="initial_pose_y" value="0.0"/>
+    </include>
+
     <node name="follow_path_node" pkg="follow_path" type="follow_path" output="screen" >
 
       <param name="path" value="$(arg path)" />
