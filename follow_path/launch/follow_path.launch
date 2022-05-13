@@ -1,0 +1,11 @@
+<launch>
+
+    <arg name="path" default="$(find follow_path)/config/path.txt" />    
+
+    <node name="follow_path_node" pkg="follow_path" type="follow_path" output="screen" >
+
+      <param name="path" value="$(arg path)" />
+
+    </node> 
+
+</launch>

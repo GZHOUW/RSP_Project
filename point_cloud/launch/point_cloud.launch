@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="point_cloud" type ="lidar_sub_node"  name = "lidar_sub"/>
+</launch>
