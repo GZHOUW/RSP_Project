@@ -10,7 +10,7 @@ Time: Spring 2022
 
 Picture of the robot used for this project:
 
-![20220513_165113.jpg](RSP%20Final%20Project%20043660b75fe341faaebaefe2f90e7ac3/20220513_165113.jpg)
+![TURTLEBOT.jpg]
 
 ## Overview
 
