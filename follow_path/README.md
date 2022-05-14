@@ -17,3 +17,5 @@ You can specify the dir in `launch/follow_path.launch`. In the `path.txt` file, 
 2. Run the launch file
     
     `roslaunch follow_path follow_path.launch`
+
+<img src="follow_demo.gif" width = "800"/>
