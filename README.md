@@ -94,8 +94,16 @@ Packages developed by us are:
     sudo apt-get install ros-melodic-bfl
     sudo apt-get install ros-melodic-openni2-launch
     sudo apt-get install ros-melodic-yocs-velocity-smoother`
+
+7. Build the packages
     
-7. Run the launch file of each package
+    Commands: 
+    
+    `cd ~/rsp_workspace`
+    
+    `catkin build`
+    
+8. Run the launch file of each package
     
     Commands:
     
@@ -134,4 +142,4 @@ Detecting human model with laser sensor is unrealistic in both gazebo and real-l
 
 Results are shown in rviz and gazebo simulations, as well as logs printed in terminal.
 
-
+Video demo can be found in individual packages’ README documentation.
