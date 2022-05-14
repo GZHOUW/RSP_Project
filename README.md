@@ -3,5 +3,20 @@
 
 ## dependency
 ```
-sudo apt-get install ros-melodic-kobuki-* install ros-melodic-ecl-streams libusb-dev libspnav-dev ros-melodic-joystick-drivers bluetooth libbluetooth-dev libcwiid-dev ros-melodic-move-base* ros-melodic-map-server* ros-melodic-amcl* ros-melodic-navigation* ros-melodic-bfl ros-melodic-openni2-launch ros-melodic-yocs-velocity-smoother
+sudo apt-get install ros-melodic-kobuki-*
+sudo apt-get install ros-melodic-ecl-streams
+sudo apt-get install libusb-dev
+sudo apt-get install libspnav-dev
+sudo apt-get install ros-melodic-joystick-drivers
+sudo apt-get install bluetooth
+sudo apt-get install libbluetooth-dev
+sudo apt-get install libcwiid-dev
+sudo apt-get install ros-melodic-move-base*
+sudo apt-get install ros-melodic-map-server*
+sudo apt-get install ros-melodic-amcl*
+sudo apt-get install ros-melodic-navigation*
+sudo apt-get install ros-melodic-bfl
+sudo apt-get install ros-melodic-openni2-launch
+sudo apt-get install ros-melodic-yocs-velocity-smoother
 ```
+
