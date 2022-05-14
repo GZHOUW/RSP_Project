@@ -22,3 +22,5 @@ In `move_turtlebot`, we need to specify some parameters.
 2. Run the launch file
     
     `roslaunch move_turtlebot move_turtlebot.launch`
+
+<img src="move_demo.gif" width = "800"/>
