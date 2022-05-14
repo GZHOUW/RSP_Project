@@ -4,7 +4,7 @@
 
 In this project, use `gazebo` for simulation, `move_base` package for planning. We also used clusting methods with cloudpoint data for object detection.   
 
-In `follow_path` package we assigned a path and feed the path to `move_base`, then the turtlebot will follow the trajecctory if it is reachable.   
+In `follow_path` package we assigned a path and feed the path to `move_base`, then the turtlebot will follow the trajectory if it is reachable.   
 
 In `move_turtlebot` package we let turtlebot randomly move in one of the assigned directions according to 'local_costmap' and laser sensor.  
 
@@ -24,6 +24,11 @@ packages developed by us:
 `object_detection`  
 `cloud_point`  
 `simulation` 
+
+## Usage
+    `git clone git@github.com:GZHOUW/RSP_Project.git` to your workspace.  
+    each package's usages are included in their `README` file   
+    
 ## dependency
 ```
 sudo apt-get install ros-melodic-kobuki-*
@@ -42,4 +47,8 @@ sudo apt-get install ros-melodic-bfl
 sudo apt-get install ros-melodic-openni2-launch
 sudo apt-get install ros-melodic-yocs-velocity-smoother
 ```
-
+## Result
+   All the minimum delivery goals are achieved, due to the hardware limitation, detecting dynamic human model in gazebo is unrealistic, so we didn't manage to reach the maximum delivery.
+   
+## Hardware
+  
