@@ -10,7 +10,7 @@ In `move_turtlebot` package we let turtlebot randomly move in one of the assigne
 
 In `turtlebot_planner` package we used RTT method and implemented a `move_base` plugin for planning.
 
-Package `front_scan` and `object_detection` use laser sensor to detect obstacles and potential human figures with clusting methods(KD-tree)  
+Package `front_scan` and `object_detection` use laser sensor to detect obstacles with clusting methods(KD-tree)  
 
 Package `cloud_point` is used to convert original laser data to point cloud data.  
 
@@ -48,7 +48,7 @@ sudo apt-get install ros-melodic-openni2-launch
 sudo apt-get install ros-melodic-yocs-velocity-smoother
 ```
 ## Result
-   All the minimum delivery goals are achieved, due to the hardware limitation, detecting dynamic human model in gazebo is unrealistic, so we didn't manage to reach the maximum delivery.
+   Detecting human model with laser sensor is unrealistic in both gazebo and real-life(too many noise and parameters to set, we spent lots of time testing it and we gave up). We do managed to detect pillars and other objects, so we switched the goal to detecting nearby obstacles in the area laser senser covers. All the delivery goals are achieved.
    
 ## Hardware
   
