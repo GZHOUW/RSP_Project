@@ -147,6 +147,3 @@ Video demo can be found in individual packages’ README documentation.
 ## Hardware problems
 
 The rp lidar has a broken bolt, yet it can still be mounted to the robot. 
-
-
-<img src="move_demo.gif" width = "800"/>
