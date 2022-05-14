@@ -10,7 +10,7 @@ Time: Spring 2022
 
 Picture of the robot used for this project:
 
-![TURTLEBOT.jpg]
+<img src="TURTLEBOT.jpg" width = "800"/>
 
 ## Overview
 
