@@ -134,4 +134,4 @@ Detecting human model with laser sensor is unrealistic in both gazebo and real-l
 
 Results are shown in rviz and gazebo simulations, as well as logs printed in terminal.
 
-Video demo can be found in individual packages’ README documentation.
+
