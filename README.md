@@ -2,9 +2,9 @@
 ## Guangwei_Zhou(gzhou11@jh.edu) 
 ## Jiahe_Xu(jxu109@jh.edu)
 
-In this project, use `gazebo` for simulation, `move_base` package for planning.   
+In this project, use `gazebo` for simulation, `move_base` package for planning. We also used clusting methods with cloudpoint data for object detection.   
 
-In `follow_path` package we assigned a path and feed the path to `move_base`.   
+In `follow_path` package we assigned a path and feed the path to `move_base`, then the turtlebot will follow the trajecctory if it is reachable.   
 
 In `move_turtlebot` package we let turtlebot randomly move in one of the assigned directions according to `local_costmap` and laser sensor.  
 
