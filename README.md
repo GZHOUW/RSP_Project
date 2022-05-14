@@ -48,9 +48,9 @@ sudo apt-get install ros-melodic-openni2-launch
 sudo apt-get install ros-melodic-yocs-velocity-smoother
 ```
 ## Result
-Goals:
+Goals:  
 `Runnable model and test routine in gazebo`   
-`Robot could locate itself in a well-known environment    `
+`Robot could locate itself in a well-known environment`  
 `Robot could detect static obstacles`  
 
    Detecting human model with laser sensor is unrealistic in both gazebo and real-life(too many noise and parameters to set, we spent lots of time testing it and we gave up). We do managed to detect pillars and other objects, so we changed our goal to detect nearby obstacles in the area laser senser covers. All the delivery goals are achieved.
