@@ -6,31 +6,19 @@ This package aims to allow a turtlebot to detect its surrounding environment and
 
 ## Environment
 
-- Ubuntu 16.04 LTS (or 18.04)
-- ROS Kinetic (or Melodic)
+- Ubuntu 18.04 LTS
+- ROS Melodic
 - Gazebo
 - catkin
 
 ## Dependencies
 
 ### Catkin Dependencies
-
 - roscpp
 - sensor_msgs
 - std_msgs
 - laser_geometry
-- pcl_ros
-
-### External Dependencies
-
-- turtlebot_gazebo
-    
-    Install with command: `sudo apt-get install ros-kinetic turtlebot-gazebo`
-    
-- turtlebot_teleop
-    
-    Install with command: `sudo apt-get install ros-kinetic turtlebot-teleop`
-    
+- pcl_ros 
 
 ## Run Demo
 
